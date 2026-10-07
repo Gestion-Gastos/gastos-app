@@ -1,0 +1,82 @@
+import { useState } from 'react'
+
+const MEDIOS = ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'Mercado Pago']
+
+function hoy() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+export default function FormGasto({ categorias, inicial, onGuardar, onCancelar }) {
+  const [form, setForm] = useState({
+    fecha: inicial?.fecha ?? hoy(),
+    monto: inicial?.monto ?? '',
+    categoria_id: inicial?.categoria_id ?? '',
+    descripcion: inicial?.descripcion ?? '',
+    medio_pago: inicial?.medio_pago ?? 'Efectivo',
+  })
+
+  const cambiar = (campo) => (e) => setForm({ ...form, [campo]: e.target.value })
+
+  function enviar(e) {
+    e.preventDefault()
+    onGuardar({
+      ...(inicial?.id ? { id: inicial.id } : {}),
+      fecha: form.fecha,
+      monto: Number(form.monto),
+      categoria_id: form.categoria_id ? Number(form.categoria_id) : null,
+      descripcion: form.descripcion.trim() || null,
+      medio_pago: form.medio_pago,
+    })
+    if (!inicial) setForm({ ...form, monto: '', descripcion: '' })
+  }
+
+  return (
+    <form className="tarjeta formulario" onSubmit={enviar}>
+      <h2>{inicial ? 'Editar gasto' : 'Nuevo gasto'}</h2>
+      <div className="grilla">
+        <label>
+          Fecha
+          <input type="date" required value={form.fecha} onChange={cambiar('fecha')} />
+        </label>
+        <label>
+          Monto
+          <input
+            type="number"
+            required
+            min="0.01"
+            step="0.01"
+            inputMode="decimal"
+            value={form.monto}
+            onChange={cambiar('monto')}
+          />
+        </label>
+        <label>
+          Categoría
+          <select value={form.categoria_id} onChange={cambiar('categoria_id')}>
+            <option value="">— Elegir —</option>
+            {categorias.map((c) => (
+              <option key={c.id} value={c.id}>{c.nombre}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Medio de pago
+          <select value={form.medio_pago} onChange={cambiar('medio_pago')}>
+            {MEDIOS.map((m) => <option key={m}>{m}</option>)}
+          </select>
+        </label>
+        <label className="ancho">
+          Descripción
+          <input value={form.descripcion} onChange={cambiar('descripcion')} placeholder="Opcional" />
+        </label>
+      </div>
+      <div className="botones">
+        <button>{inicial ? 'Guardar cambios' : 'Agregar'}</button>
+        {inicial && (
+          <button type="button" className="secundario" onClick={onCancelar}>Cancelar</button>
+        )}
+      </div>
+    </form>
+  )
+}
