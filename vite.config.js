@@ -5,4 +5,6 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: './',
+  // Docs/ no es parte de la app; si un Excel está abierto ahí, Windows lo bloquea y Vite se cae
+  server: { watch: { ignored: ['**/Docs/**'] } },
 })
