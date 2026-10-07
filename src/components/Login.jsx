@@ -15,7 +15,12 @@ export default function Login() {
     const { error } =
       modo === 'entrar'
         ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password })
+        : await supabase.auth.signUp({
+            email,
+            password,
+            // el mail de confirmación vuelve a donde te registraste (local o GitHub Pages)
+            options: { emailRedirectTo: window.location.origin + window.location.pathname },
+          })
     setEnviando(false)
     if (error) return setMensaje({ tipo: 'error', texto: error.message })
     if (modo === 'registro') {
