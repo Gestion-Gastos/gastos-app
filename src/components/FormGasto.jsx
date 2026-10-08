@@ -20,7 +20,7 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
   })
 
   const cambiar = (campo) => (e) => setForm({ ...form, [campo]: e.target.value })
-  const cambiarSiNo = (campo) => (e) => setForm({ ...form, [campo]: e.target.value === 'true' })
+  const tildar = (campo) => (e) => setForm({ ...form, [campo]: e.target.checked })
 
   // Con una categoría elegida, Item muestra solo los suyos; sin categoría, todos
   const itemsVisibles = form.categoria_id
@@ -101,20 +101,16 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
             ))}
           </select>
         </label>
-        <label>
-          Tipo
-          <select value={String(form.fijo)} onChange={cambiarSiNo('fijo')}>
-            <option value="false">Variable</option>
-            <option value="true">Fijo</option>
-          </select>
-        </label>
-        <label>
-          Gasto
-          <select value={String(form.individual)} onChange={cambiarSiNo('individual')}>
-            <option value="false">Familiar</option>
-            <option value="true">Individual</option>
-          </select>
-        </label>
+        <div className="casillas">
+          <label className="casilla">
+            <input type="checkbox" checked={form.fijo} onChange={tildar('fijo')} />
+            Fijo
+          </label>
+          <label className="casilla">
+            <input type="checkbox" checked={form.individual} onChange={tildar('individual')} />
+            Individual
+          </label>
+        </div>
         <label>
           Medio de pago
           <select value={form.medio_pago} onChange={cambiar('medio_pago')}>
