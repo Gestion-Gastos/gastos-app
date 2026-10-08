@@ -49,6 +49,9 @@ alter table public.gastos add column if not exists creado_por_email text;
 alter table public.gastos add column if not exists moneda text not null default '$'
   check (moneda in ('$', 'U$D'));
 
+-- Cotización del dólar al cargar un gasto en U$D (null en $). Ver supabase/cotizacion.sql
+alter table public.gastos add column if not exists cotizacion numeric(12,2);
+
 create index if not exists gastos_user_fecha_idx on public.gastos (user_id, fecha desc);
 
 -- ---------------------------------------------------------

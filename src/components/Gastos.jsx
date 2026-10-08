@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient'
 import FormGasto from './FormGasto'
 import Compartir from './Compartir'
 import GraficoTorta from './GraficoTorta'
-import { MONEDAS, formatear } from '../moneda'
+import { formatear, obtenerCotizacion, enPesos } from '../moneda'
 
 function mesActual() {
   const d = new Date()
@@ -26,7 +26,7 @@ export default function Gastos({ duenio, yo }) {
   const [items, setItems] = useState([])
   const [filtroTipo, setFiltroTipo] = useState('')
   const [filtroGasto, setFiltroGasto] = useState('')
-  const [monedaResumen, setMonedaResumen] = useState('$')
+  const [cotizacion, setCotizacion] = useState(null)
   const [editando, setEditando] = useState(null)
   const [error, setError] = useState(null)
 
@@ -46,7 +46,7 @@ export default function Gastos({ duenio, yo }) {
     const { desde, hasta } = rangoDelMes(mes)
     const { data, error } = await supabase
       .from('gastos')
-      .select('id, fecha, monto, moneda, descripcion, medio_pago, categoria_id, categorias(nombre), item_id, items(nombre), fijo, individual, creado_por, creado_por_email')
+      .select('id, fecha, monto, moneda, cotizacion, descripcion, medio_pago, categoria_id, categorias(nombre), item_id, items(nombre), fijo, individual, creado_por, creado_por_email')
       .eq('user_id', duenio.id)
       .gte('fecha', desde)
       .lte('fecha', hasta)
@@ -62,12 +62,25 @@ export default function Gastos({ duenio, yo }) {
     cargarItems()
   }, [])
 
+  // Cotización del dólar: al abrir y cada 30 minutos (si falla, queda la última obtenida)
+  useEffect(() => {
+    const actualizar = () => obtenerCotizacion().then(setCotizacion, (e) => setError(e.message))
+    actualizar()
+    const intervalo = setInterval(actualizar, 30 * 60 * 1000)
+    return () => clearInterval(intervalo)
+  }, [])
+
   useEffect(() => {
     cargarGastos()
   }, [mes])
 
   async function guardar(gasto) {
     const { id, ...campos } = gasto
+    // Un gasto en U$D nuevo (o que pasó de $ a U$D) guarda la cotización de hoy
+    if (campos.moneda === 'U$D' && campos.cotizacion == null) {
+      if (!cotizacion) return setError('No hay cotización del dólar disponible; no se puede guardar un gasto en U$D.')
+      campos.cotizacion = cotizacion.venta
+    }
     const { error } = id
       ? await supabase.from('gastos').update(campos).eq('id', id)
       : await supabase.from('gastos').insert({ ...campos, user_id: duenio.id })
@@ -93,30 +106,21 @@ export default function Gastos({ duenio, yo }) {
     [gastos, filtroTipo, filtroGasto]
   )
 
-  const suma = (lista) => lista.reduce((s, g) => s + Number(g.monto), 0)
-  const totalesPorMoneda = useMemo(
-    () => MONEDAS.map((m) => [m, suma(filtrados.filter((g) => g.moneda === m))]),
-    [filtrados]
-  )
-
-  // El reparto, la torta y las barras nunca mezclan monedas: muestran solo la elegida
-  const delResumen = useMemo(
-    () => filtrados.filter((g) => g.moneda === monedaResumen),
-    [filtrados, monedaResumen]
-  )
-  const total = useMemo(() => suma(delResumen), [delResumen])
-  const fijo = useMemo(() => suma(delResumen.filter((g) => g.fijo)), [delResumen])
-  const individual = useMemo(() => suma(delResumen.filter((g) => g.individual)), [delResumen])
-  const fmt = (monto) => formatear(monto, monedaResumen)
+  // Todos los totales en pesos: los gastos en U$D se convierten con su cotización
+  const venta = cotizacion?.venta
+  const suma = (lista) => lista.reduce((s, g) => s + enPesos(g, venta), 0)
+  const total = useMemo(() => suma(filtrados), [filtrados, venta])
+  const fijo = useMemo(() => suma(filtrados.filter((g) => g.fijo)), [filtrados, venta])
+  const individual = useMemo(() => suma(filtrados.filter((g) => g.individual)), [filtrados, venta])
 
   const porCategoria = useMemo(() => {
     const acc = {}
-    for (const g of delResumen) {
+    for (const g of filtrados) {
       const nombre = g.categorias?.nombre ?? 'Sin categoría'
-      acc[nombre] = (acc[nombre] ?? 0) + Number(g.monto)
+      acc[nombre] = (acc[nombre] ?? 0) + enPesos(g, venta)
     }
     return Object.entries(acc).sort((a, b) => b[1] - a[1])
-  }, [delResumen])
+  }, [filtrados, venta])
 
   return (
     <>
@@ -127,6 +131,7 @@ export default function Gastos({ duenio, yo }) {
           key={editando?.id ?? 'nuevo'}
           categorias={categorias}
           items={items}
+          cotizacion={cotizacion}
           inicial={editando}
           onGuardar={guardar}
           onCancelar={() => setEditando(null)}
@@ -154,36 +159,13 @@ export default function Gastos({ duenio, yo }) {
         <div className="resumen">
           <div className="total">
             <span>Total del mes</span>
-            <div className="monedas">
-              {totalesPorMoneda.map(([m, monto]) => (
-                <strong key={m}>{formatear(monto, m)}</strong>
-              ))}
-            </div>
+            <strong>{formatear(total)}</strong>
           </div>
           <div className="reparto">
-            <label className="ver-en">
-              Ver resumen en
-              <select value={monedaResumen} onChange={(e) => setMonedaResumen(e.target.value)}>
-                {MONEDAS.map((m) => <option key={m}>{m}</option>)}
-              </select>
-            </label>
-            <span>Fijo <b>{fmt(fijo)}</b> · Variable <b>{fmt(total - fijo)}</b></span>
-            <span>Familiar <b>{fmt(total - individual)}</b> · Individual <b>{fmt(individual)}</b></span>
+            <span>Fijo <b>{formatear(fijo)}</b> · Variable <b>{formatear(total - fijo)}</b></span>
+            <span>Familiar <b>{formatear(total - individual)}</b> · Individual <b>{formatear(individual)}</b></span>
           </div>
-          {porCategoria.length > 0 && <GraficoTorta datos={porCategoria} total={total} moneda={monedaResumen} />}
-          {porCategoria.length > 0 && (
-            <ul className="categorias">
-              {porCategoria.map(([nombre, monto]) => (
-                <li key={nombre}>
-                  <span>{nombre}</span>
-                  <div className="barra">
-                    <div style={{ width: `${(monto / total) * 100}%` }} />
-                  </div>
-                  <span className="num">{fmt(monto)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+          {porCategoria.length > 0 && <GraficoTorta datos={porCategoria} total={total} />}
         </div>
 
         {filtrados.length === 0 ? (

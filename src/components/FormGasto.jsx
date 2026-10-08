@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MONEDAS } from '../moneda'
+import { MONEDAS, formatear } from '../moneda'
 
 const MEDIOS = ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'Mercado Pago']
 
@@ -8,7 +8,7 @@ function hoy() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export default function FormGasto({ categorias, items, inicial, onGuardar, onCancelar }) {
+export default function FormGasto({ categorias, items, cotizacion, inicial, onGuardar, onCancelar }) {
   const [form, setForm] = useState({
     fecha: inicial?.fecha ?? hoy(),
     monto: inicial?.monto ?? '',
@@ -24,15 +24,15 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
   const cambiar = (campo) => (e) => setForm({ ...form, [campo]: e.target.value })
   const tildar = (campo) => (e) => setForm({ ...form, [campo]: e.target.checked })
 
-  // Con una categoría elegida, Item muestra solo los suyos; sin categoría, todos
+  // Con una categoría elegida, Item muestra los suyos y los sin categoría (como "Otros"); sin categoría, todos
   const itemsVisibles = form.categoria_id
-    ? items.filter((i) => String(i.categoria_id) === String(form.categoria_id))
+    ? items.filter((i) => i.categoria_id == null || String(i.categoria_id) === String(form.categoria_id))
     : items
 
   function cambiarCategoria(e) {
     const categoria_id = e.target.value
     const item = items.find((i) => String(i.id) === String(form.item_id))
-    const itemSigue = !categoria_id || String(item?.categoria_id) === categoria_id
+    const itemSigue = !categoria_id || item?.categoria_id == null || String(item.categoria_id) === categoria_id
     setForm({ ...form, categoria_id, item_id: itemSigue ? form.item_id : '' })
   }
 
@@ -56,6 +56,8 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
       fecha: form.fecha,
       monto: Number(form.monto),
       moneda: form.moneda,
+      // Si sigue en U$D conserva la cotización con la que se cargó
+      cotizacion: form.moneda === 'U$D' ? inicial?.cotizacion ?? null : null,
       categoria_id: form.categoria_id ? Number(form.categoria_id) : null,
       item_id: form.item_id ? Number(form.item_id) : null,
       descripcion: form.descripcion.trim() || null,
@@ -69,6 +71,16 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
   return (
     <form className="tarjeta formulario" onSubmit={enviar}>
       <h2>{inicial ? 'Editar gasto' : 'Nuevo gasto'}</h2>
+      <p className="cotizacion">
+        {cotizacion ? (
+          <>
+            Dólar oficial (venta) <b>{formatear(cotizacion.venta)}</b> · actualizado{' '}
+            {new Date(cotizacion.fecha).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}
+          </>
+        ) : (
+          'Cotización del dólar no disponible'
+        )}
+      </p>
       <div className="grilla">
         <label>
           Fecha
