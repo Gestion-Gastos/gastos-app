@@ -39,7 +39,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--fondo); }
 
-.contenedor { max-width: 900px; margin: 0 auto; padding: 16px; }
+.contenedor { max-width: 1200px; margin: 0 auto; padding: 16px; }
 .centro { text-align: center; margin-top: 30vh; }
 
 .cabecera { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
