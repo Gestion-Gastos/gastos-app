@@ -98,6 +98,8 @@ label.casilla { flex-direction: row; align-items: center; gap: 6px; font-size: 0
 .resumen { margin-bottom: 16px; }
 .total { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--borde); }
 .total strong { font-size: 1.4rem; }
+.total .monedas { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 24px; }
+.ver-en { display: flex; align-items: center; gap: 8px; flex-basis: 100%; }
 .reparto { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 8px 0; color: var(--suave); font-size: 0.9rem; border-bottom: 1px solid var(--borde); }
 .reparto b { color: var(--texto); font-weight: 600; }
 

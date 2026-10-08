@@ -1,6 +1,6 @@
 import { useState } from 'react'
+import { formatear } from '../moneda'
 
-const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
 const porcentaje = new Intl.NumberFormat('es-AR', { style: 'percent', maximumFractionDigits: 0 })
 
 // Más de 6 porciones no se distinguen: las 5 mayores y el resto juntas en gris
@@ -11,7 +11,7 @@ const CIRCUNFERENCIA = 2 * Math.PI * RADIO
 const SEPARACION = 2
 
 // datos: [[nombre, monto], ...] ordenado de mayor a menor
-export default function GraficoTorta({ datos, total }) {
+export default function GraficoTorta({ datos, total, moneda }) {
   const [activa, setActiva] = useState(null)
 
   const porciones = datos.slice(0, MAX_PORCIONES).map(([nombre, monto], i) => ({
@@ -30,7 +30,7 @@ export default function GraficoTorta({ datos, total }) {
     return arco
   })
 
-  const detalle = (p) => `${p.nombre}: ${pesos.format(p.monto)} (${porcentaje.format(p.monto / total)})`
+  const detalle = (p) => `${p.nombre}: ${formatear(p.monto, moneda)} (${porcentaje.format(p.monto / total)})`
 
   return (
     <div className="torta" onMouseLeave={() => setActiva(null)}>
@@ -59,7 +59,7 @@ export default function GraficoTorta({ datos, total }) {
           })}
         </g>
         <text x="100" y="94" textAnchor="middle" className="torta-etiqueta">Total</text>
-        <text x="100" y="116" textAnchor="middle" className="torta-total">{pesos.format(total)}</text>
+        <text x="100" y="116" textAnchor="middle" className="torta-total">{formatear(total, moneda)}</text>
       </svg>
 
       <ul className="torta-leyenda">
@@ -71,7 +71,7 @@ export default function GraficoTorta({ datos, total }) {
           >
             <span className="punto" style={{ background: a.color }} />
             <span className="nombre">{a.nombre}</span>
-            <span className="num">{pesos.format(a.monto)}</span>
+            <span className="num">{formatear(a.monto, moneda)}</span>
             <span className="pct">{porcentaje.format(a.monto / total)}</span>
           </li>
         ))}

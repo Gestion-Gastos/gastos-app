@@ -3,8 +3,7 @@ import { supabase } from '../supabaseClient'
 import FormGasto from './FormGasto'
 import Compartir from './Compartir'
 import GraficoTorta from './GraficoTorta'
-
-const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
+import { MONEDAS, formatear } from '../moneda'
 
 function mesActual() {
   const d = new Date()
@@ -27,6 +26,7 @@ export default function Gastos({ duenio, yo }) {
   const [items, setItems] = useState([])
   const [filtroTipo, setFiltroTipo] = useState('')
   const [filtroGasto, setFiltroGasto] = useState('')
+  const [monedaResumen, setMonedaResumen] = useState('$')
   const [editando, setEditando] = useState(null)
   const [error, setError] = useState(null)
 
@@ -46,7 +46,7 @@ export default function Gastos({ duenio, yo }) {
     const { desde, hasta } = rangoDelMes(mes)
     const { data, error } = await supabase
       .from('gastos')
-      .select('id, fecha, monto, descripcion, medio_pago, categoria_id, categorias(nombre), item_id, items(nombre), fijo, individual, creado_por, creado_por_email')
+      .select('id, fecha, monto, moneda, descripcion, medio_pago, categoria_id, categorias(nombre), item_id, items(nombre), fijo, individual, creado_por, creado_por_email')
       .eq('user_id', duenio.id)
       .gte('fecha', desde)
       .lte('fecha', hasta)
@@ -94,18 +94,29 @@ export default function Gastos({ duenio, yo }) {
   )
 
   const suma = (lista) => lista.reduce((s, g) => s + Number(g.monto), 0)
-  const total = useMemo(() => suma(filtrados), [filtrados])
-  const fijo = useMemo(() => suma(filtrados.filter((g) => g.fijo)), [filtrados])
-  const individual = useMemo(() => suma(filtrados.filter((g) => g.individual)), [filtrados])
+  const totalesPorMoneda = useMemo(
+    () => MONEDAS.map((m) => [m, suma(filtrados.filter((g) => g.moneda === m))]),
+    [filtrados]
+  )
+
+  // El reparto, la torta y las barras nunca mezclan monedas: muestran solo la elegida
+  const delResumen = useMemo(
+    () => filtrados.filter((g) => g.moneda === monedaResumen),
+    [filtrados, monedaResumen]
+  )
+  const total = useMemo(() => suma(delResumen), [delResumen])
+  const fijo = useMemo(() => suma(delResumen.filter((g) => g.fijo)), [delResumen])
+  const individual = useMemo(() => suma(delResumen.filter((g) => g.individual)), [delResumen])
+  const fmt = (monto) => formatear(monto, monedaResumen)
 
   const porCategoria = useMemo(() => {
     const acc = {}
-    for (const g of filtrados) {
+    for (const g of delResumen) {
       const nombre = g.categorias?.nombre ?? 'Sin categoría'
       acc[nombre] = (acc[nombre] ?? 0) + Number(g.monto)
     }
     return Object.entries(acc).sort((a, b) => b[1] - a[1])
-  }, [filtrados])
+  }, [delResumen])
 
   return (
     <>
@@ -143,13 +154,23 @@ export default function Gastos({ duenio, yo }) {
         <div className="resumen">
           <div className="total">
             <span>Total del mes</span>
-            <strong>{pesos.format(total)}</strong>
+            <div className="monedas">
+              {totalesPorMoneda.map(([m, monto]) => (
+                <strong key={m}>{formatear(monto, m)}</strong>
+              ))}
+            </div>
           </div>
           <div className="reparto">
-            <span>Fijo <b>{pesos.format(fijo)}</b> · Variable <b>{pesos.format(total - fijo)}</b></span>
-            <span>Familiar <b>{pesos.format(total - individual)}</b> · Individual <b>{pesos.format(individual)}</b></span>
+            <label className="ver-en">
+              Ver resumen en
+              <select value={monedaResumen} onChange={(e) => setMonedaResumen(e.target.value)}>
+                {MONEDAS.map((m) => <option key={m}>{m}</option>)}
+              </select>
+            </label>
+            <span>Fijo <b>{fmt(fijo)}</b> · Variable <b>{fmt(total - fijo)}</b></span>
+            <span>Familiar <b>{fmt(total - individual)}</b> · Individual <b>{fmt(individual)}</b></span>
           </div>
-          {porCategoria.length > 0 && <GraficoTorta datos={porCategoria} total={total} />}
+          {porCategoria.length > 0 && <GraficoTorta datos={porCategoria} total={total} moneda={monedaResumen} />}
           {porCategoria.length > 0 && (
             <ul className="categorias">
               {porCategoria.map(([nombre, monto]) => (
@@ -158,7 +179,7 @@ export default function Gastos({ duenio, yo }) {
                   <div className="barra">
                     <div style={{ width: `${(monto / total) * 100}%` }} />
                   </div>
-                  <span className="num">{pesos.format(monto)}</span>
+                  <span className="num">{fmt(monto)}</span>
                 </li>
               ))}
             </ul>
@@ -180,6 +201,7 @@ export default function Gastos({ duenio, yo }) {
                   <th>Tipo</th>
                   <th>Descripción</th>
                   <th>Medio</th>
+                  <th>Moneda</th>
                   <th className="num">Monto</th>
                   <th>Cargado por</th>
                   {puedeEscribir && <th></th>}
@@ -194,7 +216,8 @@ export default function Gastos({ duenio, yo }) {
                     <td>{g.fijo ? 'Fijo' : 'Variable'} · {g.individual ? 'Individual' : 'Familiar'}</td>
                     <td>{g.descripcion}</td>
                     <td>{g.medio_pago}</td>
-                    <td className="num">{pesos.format(g.monto)}</td>
+                    <td>{g.moneda}</td>
+                    <td className="num">{formatear(g.monto, g.moneda)}</td>
                     <td>{g.creado_por_email ?? '—'}</td>
                     {puedeEscribir && (
                       <td className="acciones">

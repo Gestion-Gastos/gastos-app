@@ -45,6 +45,10 @@ alter table public.gastos add column if not exists individual boolean not null d
 alter table public.gastos add column if not exists creado_por uuid references auth.users(id) on delete set null;
 alter table public.gastos add column if not exists creado_por_email text;
 
+-- Moneda de cada gasto. Ver supabase/moneda.sql
+alter table public.gastos add column if not exists moneda text not null default '$'
+  check (moneda in ('$', 'U$D'));
+
 create index if not exists gastos_user_fecha_idx on public.gastos (user_id, fecha desc);
 
 -- ---------------------------------------------------------

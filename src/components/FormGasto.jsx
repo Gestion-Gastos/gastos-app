@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { MONEDAS } from '../moneda'
 
 const MEDIOS = ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'Mercado Pago']
 
@@ -11,6 +12,7 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
   const [form, setForm] = useState({
     fecha: inicial?.fecha ?? hoy(),
     monto: inicial?.monto ?? '',
+    moneda: inicial?.moneda ?? '$',
     categoria_id: inicial?.categoria_id ?? '',
     item_id: inicial?.item_id ?? '',
     descripcion: inicial?.descripcion ?? '',
@@ -53,6 +55,7 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
       ...(inicial?.id ? { id: inicial.id } : {}),
       fecha: form.fecha,
       monto: Number(form.monto),
+      moneda: form.moneda,
       categoria_id: form.categoria_id ? Number(form.categoria_id) : null,
       item_id: form.item_id ? Number(form.item_id) : null,
       descripcion: form.descripcion.trim() || null,
@@ -82,6 +85,12 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
             value={form.monto}
             onChange={cambiar('monto')}
           />
+        </label>
+        <label>
+          Moneda
+          <select value={form.moneda} onChange={cambiar('moneda')}>
+            {MONEDAS.map((m) => <option key={m}>{m}</option>)}
+          </select>
         </label>
         <label>
           Categoría
