@@ -37,12 +37,12 @@ insert into public.items (nombre, user_id)
 select v.nombre, null
 from (values
   ('Cuota colegio'), ('Materiales'), ('Excursiones'), ('Edenor'), ('ABL / ARBA'), ('Aysa'),
-  ('Naturgy'), ('Ingles'), ('Baile'), ('Voley'), ('Muchacha'), ('Aporte Muchacha'),
-  ('Antiguedad'), ('Patente'), ('Seguro Auto'), ('Disney +'), ('Netflix'), ('Tuenti'),
-  ('Futbol'), ('OSDE'), ('Pilates'), ('Osteopata'), ('Psicologa'), ('Claro'),
+  ('Naturgy'), ('Inglés'), ('Baile'), ('Voley'), ('Muchacha'), ('Aporte Muchacha'),
+  ('Antigüedad'), ('Patente'), ('Seguro Auto'), ('Disney +'), ('Netflix'), ('Tuenti'),
+  ('Fútbol'), ('OSDE'), ('Pilates'), ('Osteópata'), ('Psicóloga'), ('Claro'),
   ('Supermercado'), ('Verdulería'), ('Carnicería'), ('Panadería'), ('Farmacia'),
-  ('Regalos Jardin y Colegio'), ('Arreglos Casa'), ('Resto'), ('Tarjeta'), ('Nafta'),
-  ('Service Auto'), ('Otras Comidas Restaurant'), ('Ropa'), ('Utilez'), ('Regalos'),
+  ('Regalos Jardín y Colegio'), ('Arreglos Casa'), ('Resto'), ('Tarjeta'), ('Nafta'),
+  ('Service Auto'), ('Otras Comidas Restaurant'), ('Ropa'), ('Útiles'), ('Regalos'),
   ('Depi + uñas'), ('Vacaciones'), ('Gastos de cumple')
 ) as v(nombre)
 where not exists (

@@ -8,7 +8,7 @@
 update public.items i
 set nombre = v.nuevo
 from (values
-  ('Ingles meli', 'Ingles'),
+  ('Ingles meli', 'Inglés'),
   ('Clases Baile', 'Baile'),
   ('Voley Meli Laprida', 'Voley'),
   ('Tarjeta Ciudad', 'Tarjeta'),
@@ -21,7 +21,7 @@ where i.nombre = v.viejo and i.user_id is null;
 
 -- Unificados: los gastos de estos items pasan al item que queda
 update public.gastos
-set item_id = (select id from public.items where nombre = 'Ingles' and user_id is null)
+set item_id = (select id from public.items where nombre = 'Inglés' and user_id is null)
 where item_id in (select id from public.items where nombre = 'ingles delfi' and user_id is null);
 
 update public.gastos
@@ -35,6 +35,20 @@ where item_id in (
 delete from public.items
 where user_id is null
   and nombre in ('ingles delfi', 'Otros items visa', 'Tarjeta Master Frances', 'Efectivo');
+
+-- Tildes y nombres mal escritos
+update public.items i
+set nombre = v.nuevo
+from (values
+  ('Ingles', 'Inglés'),
+  ('Futbol', 'Fútbol'),
+  ('Antiguedad', 'Antigüedad'),
+  ('Osteopata', 'Osteópata'),
+  ('Psicologa', 'Psicóloga'),
+  ('Regalos Jardin y Colegio', 'Regalos Jardín y Colegio'),
+  ('Utilez', 'Útiles')
+) as v(viejo, nuevo)
+where i.nombre = v.viejo and i.user_id is null;
 
 -- Para comprobar
 select id, nombre from public.items where user_id is null order by nombre;
