@@ -21,7 +21,10 @@ export default function App() {
   return (
     <div className="contenedor">
       <header className="cabecera">
-        <h1>Mis Gastos</h1>
+        <h1 className="titulo">
+          <img src={`${import.meta.env.BASE_URL}icono.svg`} alt="" className="logo" />
+          Gestión de Gastos
+        </h1>
         {session && (
           <div className="usuario">
             <span>{session.user.email}</span>

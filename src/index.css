@@ -31,6 +31,8 @@ body { margin: 0; background: var(--fondo); }
 
 .cabecera { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .cabecera h1 { font-size: 1.5rem; margin: 8px 0; }
+.titulo { display: flex; align-items: center; gap: 10px; }
+.logo { width: 36px; height: 36px; }
 .usuario { display: flex; align-items: center; gap: 8px; color: var(--suave); font-size: 0.9rem; }
 
 .tarjeta {
