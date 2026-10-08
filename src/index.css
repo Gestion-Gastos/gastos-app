@@ -7,6 +7,13 @@
   --acento: #2563eb;
   --peligro: #dc2626;
   --ok: #15803d;
+  /* gráfico: paleta categórica validada (claro) */
+  --serie-1: #2a78d6;
+  --serie-2: #eb6834;
+  --serie-3: #1baf7a;
+  --serie-4: #eda100;
+  --serie-5: #e87ba4;
+  --serie-resto: #b4b9c2;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--texto);
   background: var(--fondo);
@@ -20,6 +27,12 @@
     --suave: #9aa1ad;
     --borde: #2c323d;
     --acento: #5b8def;
+    --serie-1: #3987e5;
+    --serie-2: #d95926;
+    --serie-3: #199e70;
+    --serie-4: #c98500;
+    --serie-5: #d55181;
+    --serie-resto: #5a6170;
   }
 }
 
@@ -111,3 +124,15 @@ label.viendo { margin: 8px 0; }
 .compartidos li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid var(--borde); }
 .compartidos li span { flex: 1; min-width: 160px; overflow-wrap: anywhere; }
 .grilla .botones { margin-top: 0; align-items: flex-end; }
+
+.torta { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; padding: 16px 0; border-bottom: 1px solid var(--borde); }
+.torta svg { width: 180px; height: 180px; flex: none; margin: 0 auto; overflow: visible; }
+.torta circle { stroke-linecap: butt; cursor: pointer; transition: opacity 0.15s, stroke-width 0.15s; }
+.torta circle.atenuada { opacity: 0.35; }
+.torta-etiqueta { fill: var(--suave); font-size: 12px; }
+.torta-total { fill: var(--texto); font-size: 17px; font-weight: 600; }
+.torta-leyenda { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 4px; }
+.torta-leyenda li { display: grid; grid-template-columns: 10px 1fr auto 40px; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 6px; font-size: 0.9rem; }
+.torta-leyenda li.activa { background: var(--fondo); }
+.torta-leyenda .punto { width: 10px; height: 10px; border-radius: 50%; }
+.torta-leyenda .pct { color: var(--suave); text-align: right; }

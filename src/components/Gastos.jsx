@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import FormGasto from './FormGasto'
 import Compartir from './Compartir'
+import GraficoTorta from './GraficoTorta'
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
 
@@ -147,6 +148,7 @@ export default function Gastos({ duenio }) {
             <span>Fijo <b>{pesos.format(fijo)}</b> · Variable <b>{pesos.format(total - fijo)}</b></span>
             <span>Familiar <b>{pesos.format(total - individual)}</b> · Individual <b>{pesos.format(individual)}</b></span>
           </div>
+          {porCategoria.length > 0 && <GraficoTorta datos={porCategoria} total={total} />}
           {porCategoria.length > 0 && (
             <ul className="categorias">
               {porCategoria.map(([nombre, monto]) => (
