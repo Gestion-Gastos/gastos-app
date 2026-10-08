@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import FormGasto from './FormGasto'
+import Compartir from './Compartir'
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
 
@@ -15,7 +16,9 @@ function rangoDelMes(mes) {
   return { desde: `${mes}-01`, hasta: `${mes}-${String(ultimoDia).padStart(2, '0')}` }
 }
 
-export default function Gastos() {
+// duenio: de quién son los gastos que se ven ({ id, propio } o { id, email, permiso } si me los compartieron)
+export default function Gastos({ duenio }) {
+  const puedeEscribir = duenio.propio || duenio.permiso === 'escritura'
   const [mes, setMes] = useState(mesActual())
   const [gastos, setGastos] = useState([])
   const [categorias, setCategorias] = useState([])
@@ -42,6 +45,7 @@ export default function Gastos() {
     const { data, error } = await supabase
       .from('gastos')
       .select('id, fecha, monto, descripcion, medio_pago, categoria_id, categorias(nombre), item_id, items(nombre), fijo, individual')
+      .eq('user_id', duenio.id)
       .gte('fecha', desde)
       .lte('fecha', hasta)
       .order('fecha', { ascending: false })
@@ -64,7 +68,7 @@ export default function Gastos() {
     const { id, ...campos } = gasto
     const { error } = id
       ? await supabase.from('gastos').update(campos).eq('id', id)
-      : await supabase.from('gastos').insert(campos)
+      : await supabase.from('gastos').insert({ ...campos, user_id: duenio.id })
     if (error) return setError(error.message)
     setEditando(null)
     cargarGastos()
@@ -105,18 +109,20 @@ export default function Gastos() {
     <>
       {error && <p className="error">{error}</p>}
 
-      <FormGasto
-        key={editando?.id ?? 'nuevo'}
-        categorias={categorias}
-        items={items}
-        inicial={editando}
-        onGuardar={guardar}
-        onCancelar={() => setEditando(null)}
-      />
+      {puedeEscribir && (
+        <FormGasto
+          key={editando?.id ?? 'nuevo'}
+          categorias={categorias}
+          items={items}
+          inicial={editando}
+          onGuardar={guardar}
+          onCancelar={() => setEditando(null)}
+        />
+      )}
 
       <section className="tarjeta">
         <div className="fila-titulo">
-          <h2>Historial</h2>
+          <h2>{duenio.propio ? 'Historial' : `Gastos de ${duenio.email}`}</h2>
           <div className="filtros">
             <select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
               <option value="">Fijos y variables</option>
@@ -172,7 +178,7 @@ export default function Gastos() {
                   <th>Descripción</th>
                   <th>Medio</th>
                   <th className="num">Monto</th>
-                  <th></th>
+                  {puedeEscribir && <th></th>}
                 </tr>
               </thead>
               <tbody>
@@ -185,10 +191,12 @@ export default function Gastos() {
                     <td>{g.descripcion}</td>
                     <td>{g.medio_pago}</td>
                     <td className="num">{pesos.format(g.monto)}</td>
-                    <td className="acciones">
-                      <button className="secundario" onClick={() => setEditando(g)}>Editar</button>
-                      <button className="peligro" onClick={() => borrar(g.id)}>Borrar</button>
-                    </td>
+                    {puedeEscribir && (
+                      <td className="acciones">
+                        <button className="secundario" onClick={() => setEditando(g)}>Editar</button>
+                        <button className="peligro" onClick={() => borrar(g.id)}>Borrar</button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -196,6 +204,8 @@ export default function Gastos() {
           </div>
         )}
       </section>
+
+      {duenio.propio && <Compartir />}
     </>
   )
 }

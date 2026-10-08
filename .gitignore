@@ -5,3 +5,4 @@ dist
 .env.admin
 .claude/settings.local.json
 Docs/
+supabase/.temp

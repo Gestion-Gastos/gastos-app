@@ -80,6 +80,8 @@ create policy "borrar categorias propias" on public.categorias
   for delete to authenticated
   using (user_id = auth.uid());
 
+-- supabase/compartir.sql reemplaza esta policy por otras que además permiten ver o editar
+-- los gastos que otro usuario te compartió. Corré ese archivo después de este.
 drop policy if exists "gastos propios" on public.gastos;
 create policy "gastos propios" on public.gastos
   for all to authenticated
