@@ -3,4 +3,5 @@ dist
 .env
 .env.local
 .env.admin
+.claude/settings.local.json
 Docs/
