@@ -36,15 +36,14 @@ create policy "borrar items propios" on public.items
 insert into public.items (nombre, user_id)
 select v.nombre, null
 from (values
-  ('Cuota colegio'), ('materiales'), ('excursiones'), ('Edenor'), ('ABL / ARBA'), ('Aysa'),
-  ('Naturgy'), ('Ingles meli'), ('ingles delfi'), ('Clases Baile'), ('Voley Meli Laprida'),
-  ('Muchacha'), ('Aporte Muchacha'), ('Antiguedad'), ('Patente'), ('Seguro Auto'), ('Disney +'),
-  ('Nexflix'), ('Tuenti'), ('Futbol'), ('OSDE'), ('PIlates'), ('Osteopata'), ('Psicologa'),
-  ('Claro'), ('Supermercado'), ('Verdulería'), ('Carnicería'), ('Panadería'), ('Farmacia'),
-  ('Regalos Jardin y Colegio'), ('Arreglos Casa'), ('Resto'), ('Tarjeta Ciudad'),
-  ('Otros items visa'), ('Tarjeta Master Frances'), ('Efectivo'), ('Nafta'), ('Service Auto'),
-  ('Otras Comidas Restaurant'), ('Ropa'), ('Utilez'), ('Regalos'), ('Depi + uñas'),
-  ('Vacaciones'), ('Gastos de cumple')
+  ('Cuota colegio'), ('Materiales'), ('Excursiones'), ('Edenor'), ('ABL / ARBA'), ('Aysa'),
+  ('Naturgy'), ('Ingles'), ('Baile'), ('Voley'), ('Muchacha'), ('Aporte Muchacha'),
+  ('Antiguedad'), ('Patente'), ('Seguro Auto'), ('Disney +'), ('Netflix'), ('Tuenti'),
+  ('Futbol'), ('OSDE'), ('Pilates'), ('Osteopata'), ('Psicologa'), ('Claro'),
+  ('Supermercado'), ('Verdulería'), ('Carnicería'), ('Panadería'), ('Farmacia'),
+  ('Regalos Jardin y Colegio'), ('Arreglos Casa'), ('Resto'), ('Tarjeta'), ('Nafta'),
+  ('Service Auto'), ('Otras Comidas Restaurant'), ('Ropa'), ('Utilez'), ('Regalos'),
+  ('Depi + uñas'), ('Vacaciones'), ('Gastos de cumple')
 ) as v(nombre)
 where not exists (
   select 1 from public.items i where i.nombre = v.nombre and i.user_id is null
