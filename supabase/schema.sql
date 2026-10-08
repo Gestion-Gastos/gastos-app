@@ -58,8 +58,8 @@ create policy "gastos propios" on public.gastos
 insert into public.categorias (nombre, user_id)
 select v.nombre, null
 from (values
-  ('Comida'), ('Supermercado'), ('Transporte'), ('Servicios'),
-  ('Alquiler'), ('Salud'), ('Ocio'), ('Ropa'), ('Educación'), ('Otros')
+  ('Alimentos'), ('Vivienda'), ('Servicios'), ('Salud'), ('Deporte'),
+  ('Entretenimiento'), ('Transporte'), ('Otros'), ('Clase'), ('Colegio')
 ) as v(nombre)
 where not exists (
   select 1 from public.categorias c where c.nombre = v.nombre and c.user_id is null
