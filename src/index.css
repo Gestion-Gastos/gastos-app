@@ -72,7 +72,8 @@ button.link { background: none; color: var(--acento); padding: 0; }
 
 .grilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 .grilla .ancho { grid-column: 1 / -1; }
-.casillas { display: flex; align-items: flex-end; gap: 16px; padding-bottom: 8px; }
+fieldset.casillas { display: flex; align-items: center; gap: 16px; margin: 0; padding: 4px 10px 8px; border: 1px solid var(--borde); border-radius: 8px; }
+.casillas legend { padding: 0 4px; font-size: 0.85rem; color: var(--suave); }
 label.casilla { flex-direction: row; align-items: center; gap: 6px; font-size: 0.95rem; color: var(--texto); cursor: pointer; }
 .casilla input { width: 18px; height: 18px; padding: 0; margin: 0; accent-color: var(--acento); cursor: pointer; }
 .botones { display: flex; gap: 8px; margin-top: 12px; }

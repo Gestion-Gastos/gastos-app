@@ -101,7 +101,8 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
             ))}
           </select>
         </label>
-        <div className="casillas">
+        <fieldset className="casillas">
+          <legend>Gasto</legend>
           <label className="casilla">
             <input type="checkbox" checked={form.fijo} onChange={tildar('fijo')} />
             Fijo
@@ -110,7 +111,7 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
             <input type="checkbox" checked={form.individual} onChange={tildar('individual')} />
             Individual
           </label>
-        </div>
+        </fieldset>
         <label>
           Medio de pago
           <select value={form.medio_pago} onChange={cambiar('medio_pago')}>
