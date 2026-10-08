@@ -30,7 +30,7 @@ export default function Gastos() {
   }
 
   async function cargarItems() {
-    const { data, error } = await supabase.from('items').select('id, nombre').order('nombre')
+    const { data, error } = await supabase.from('items').select('id, nombre, categoria_id').order('nombre')
     if (error) return setError(error.message)
     setItems(data)
   }
