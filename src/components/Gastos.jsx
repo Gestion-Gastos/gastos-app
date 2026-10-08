@@ -18,7 +18,8 @@ function rangoDelMes(mes) {
 }
 
 // duenio: de quién son los gastos que se ven ({ id, propio } o { id, email, permiso } si me los compartieron)
-export default function Gastos({ duenio }) {
+// yo: mi id de usuario (solo quien cargó un gasto lo puede borrar)
+export default function Gastos({ duenio, yo }) {
   const puedeEscribir = duenio.propio || duenio.permiso === 'escritura'
   const [mes, setMes] = useState(mesActual())
   const [gastos, setGastos] = useState([])
@@ -45,7 +46,7 @@ export default function Gastos({ duenio }) {
     const { desde, hasta } = rangoDelMes(mes)
     const { data, error } = await supabase
       .from('gastos')
-      .select('id, fecha, monto, descripcion, medio_pago, categoria_id, categorias(nombre), item_id, items(nombre), fijo, individual')
+      .select('id, fecha, monto, descripcion, medio_pago, categoria_id, categorias(nombre), item_id, items(nombre), fijo, individual, creado_por, creado_por_email')
       .eq('user_id', duenio.id)
       .gte('fecha', desde)
       .lte('fecha', hasta)
@@ -180,6 +181,7 @@ export default function Gastos({ duenio }) {
                   <th>Descripción</th>
                   <th>Medio</th>
                   <th className="num">Monto</th>
+                  <th>Cargado por</th>
                   {puedeEscribir && <th></th>}
                 </tr>
               </thead>
@@ -193,10 +195,13 @@ export default function Gastos({ duenio }) {
                     <td>{g.descripcion}</td>
                     <td>{g.medio_pago}</td>
                     <td className="num">{pesos.format(g.monto)}</td>
+                    <td>{g.creado_por === yo ? 'Vos' : g.creado_por_email ?? '—'}</td>
                     {puedeEscribir && (
                       <td className="acciones">
                         <button className="secundario" onClick={() => setEditando(g)}>Editar</button>
-                        <button className="peligro" onClick={() => borrar(g.id)}>Borrar</button>
+                        {g.creado_por === yo && (
+                          <button className="peligro" onClick={() => borrar(g.id)}>Borrar</button>
+                        )}
                       </td>
                     )}
                   </tr>

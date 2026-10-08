@@ -46,7 +46,7 @@ export default function App() {
 
   let contenido = <Login />
   if (session?.user.user_metadata?.falta_password) contenido = <ElegirPassword />
-  else if (session) contenido = <Gastos key={duenio.id} duenio={duenio} />
+  else if (session) contenido = <Gastos key={duenio.id} duenio={duenio} yo={userId} />
 
   return (
     <div className="contenedor">

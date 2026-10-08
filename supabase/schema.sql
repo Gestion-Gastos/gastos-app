@@ -41,6 +41,10 @@ alter table public.items  add column if not exists individual boolean not null d
 alter table public.gastos add column if not exists fijo       boolean not null default false;
 alter table public.gastos add column if not exists individual boolean not null default false;
 
+-- Quién cargó cada gasto (lo completa un trigger). Ver supabase/cargado_por.sql
+alter table public.gastos add column if not exists creado_por uuid references auth.users(id) on delete set null;
+alter table public.gastos add column if not exists creado_por_email text;
+
 create index if not exists gastos_user_fecha_idx on public.gastos (user_id, fecha desc);
 
 -- ---------------------------------------------------------
