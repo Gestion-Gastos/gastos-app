@@ -23,6 +23,17 @@ create table if not exists public.gastos (
   created_at    timestamptz not null default now()
 );
 
+-- Items (subcategorías): mismo criterio que categorías. Ver supabase/items.sql para los valores.
+create table if not exists public.items (
+  id            bigint generated always as identity primary key,
+  nombre        text not null,
+  categoria_id  bigint references public.categorias(id) on delete set null,
+  user_id       uuid references auth.users(id) on delete cascade,
+  created_at    timestamptz not null default now()
+);
+
+alter table public.gastos add column if not exists item_id bigint references public.items(id) on delete set null;
+
 create index if not exists gastos_user_fecha_idx on public.gastos (user_id, fecha desc);
 
 -- ---------------------------------------------------------
@@ -30,6 +41,22 @@ create index if not exists gastos_user_fecha_idx on public.gastos (user_id, fech
 -- ---------------------------------------------------------
 alter table public.categorias enable row level security;
 alter table public.gastos     enable row level security;
+alter table public.items      enable row level security;
+
+drop policy if exists "ver items" on public.items;
+create policy "ver items" on public.items
+  for select to authenticated
+  using (user_id is null or user_id = auth.uid());
+
+drop policy if exists "crear items propios" on public.items;
+create policy "crear items propios" on public.items
+  for insert to authenticated
+  with check (user_id = auth.uid());
+
+drop policy if exists "borrar items propios" on public.items;
+create policy "borrar items propios" on public.items
+  for delete to authenticated
+  using (user_id = auth.uid());
 
 drop policy if exists "ver categorias" on public.categorias;
 create policy "ver categorias" on public.categorias

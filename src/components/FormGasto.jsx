@@ -7,11 +7,12 @@ function hoy() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export default function FormGasto({ categorias, inicial, onGuardar, onCancelar }) {
+export default function FormGasto({ categorias, items, inicial, onGuardar, onCancelar }) {
   const [form, setForm] = useState({
     fecha: inicial?.fecha ?? hoy(),
     monto: inicial?.monto ?? '',
     categoria_id: inicial?.categoria_id ?? '',
+    item_id: inicial?.item_id ?? '',
     descripcion: inicial?.descripcion ?? '',
     medio_pago: inicial?.medio_pago ?? 'Efectivo',
   })
@@ -25,6 +26,7 @@ export default function FormGasto({ categorias, inicial, onGuardar, onCancelar }
       fecha: form.fecha,
       monto: Number(form.monto),
       categoria_id: form.categoria_id ? Number(form.categoria_id) : null,
+      item_id: form.item_id ? Number(form.item_id) : null,
       descripcion: form.descripcion.trim() || null,
       medio_pago: form.medio_pago,
     })
@@ -57,6 +59,15 @@ export default function FormGasto({ categorias, inicial, onGuardar, onCancelar }
             <option value="">— Elegir —</option>
             {categorias.map((c) => (
               <option key={c.id} value={c.id}>{c.nombre}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Item
+          <select value={form.item_id} onChange={cambiar('item_id')}>
+            <option value="">— Elegir —</option>
+            {items.map((i) => (
+              <option key={i.id} value={i.id}>{i.nombre}</option>
             ))}
           </select>
         </label>

@@ -19,6 +19,7 @@ export default function Gastos() {
   const [mes, setMes] = useState(mesActual())
   const [gastos, setGastos] = useState([])
   const [categorias, setCategorias] = useState([])
+  const [items, setItems] = useState([])
   const [editando, setEditando] = useState(null)
   const [error, setError] = useState(null)
 
@@ -28,11 +29,17 @@ export default function Gastos() {
     setCategorias(data)
   }
 
+  async function cargarItems() {
+    const { data, error } = await supabase.from('items').select('id, nombre').order('nombre')
+    if (error) return setError(error.message)
+    setItems(data)
+  }
+
   async function cargarGastos() {
     const { desde, hasta } = rangoDelMes(mes)
     const { data, error } = await supabase
       .from('gastos')
-      .select('id, fecha, monto, descripcion, medio_pago, categoria_id, categorias(nombre)')
+      .select('id, fecha, monto, descripcion, medio_pago, categoria_id, categorias(nombre), item_id, items(nombre)')
       .gte('fecha', desde)
       .lte('fecha', hasta)
       .order('fecha', { ascending: false })
@@ -44,6 +51,7 @@ export default function Gastos() {
 
   useEffect(() => {
     cargarCategorias()
+    cargarItems()
   }, [])
 
   useEffect(() => {
@@ -85,6 +93,7 @@ export default function Gastos() {
       <FormGasto
         key={editando?.id ?? 'nuevo'}
         categorias={categorias}
+        items={items}
         inicial={editando}
         onGuardar={guardar}
         onCancelar={() => setEditando(null)}
@@ -125,6 +134,7 @@ export default function Gastos() {
                 <tr>
                   <th>Fecha</th>
                   <th>Categoría</th>
+                  <th>Item</th>
                   <th>Descripción</th>
                   <th>Medio</th>
                   <th className="num">Monto</th>
@@ -136,6 +146,7 @@ export default function Gastos() {
                   <tr key={g.id}>
                     <td>{g.fecha.split('-').reverse().join('/')}</td>
                     <td>{g.categorias?.nombre ?? '—'}</td>
+                    <td>{g.items?.nombre ?? '—'}</td>
                     <td>{g.descripcion}</td>
                     <td>{g.medio_pago}</td>
                     <td className="num">{pesos.format(g.monto)}</td>
