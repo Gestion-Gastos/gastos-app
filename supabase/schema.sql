@@ -34,6 +34,13 @@ create table if not exists public.items (
 
 alter table public.gastos add column if not exists item_id bigint references public.items(id) on delete set null;
 
+-- Fijo / Variable y Familiar / Individual: el item trae el valor por defecto, el gasto guarda el suyo.
+-- Ver supabase/fijo_individual.sql para los valores.
+alter table public.items  add column if not exists fijo       boolean not null default false;
+alter table public.items  add column if not exists individual boolean not null default false;
+alter table public.gastos add column if not exists fijo       boolean not null default false;
+alter table public.gastos add column if not exists individual boolean not null default false;
+
 create index if not exists gastos_user_fecha_idx on public.gastos (user_id, fecha desc);
 
 -- ---------------------------------------------------------

@@ -74,12 +74,15 @@ button.link { background: none; color: var(--acento); padding: 0; }
 .grilla .ancho { grid-column: 1 / -1; }
 .botones { display: flex; gap: 8px; margin-top: 12px; }
 
-.fila-titulo { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+.fila-titulo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+.filtros { display: flex; flex-wrap: wrap; gap: 8px; }
 .fila-titulo h2 { margin: 0; }
 
 .resumen { margin-bottom: 16px; }
 .total { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--borde); }
 .total strong { font-size: 1.4rem; }
+.reparto { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 8px 0; color: var(--suave); font-size: 0.9rem; border-bottom: 1px solid var(--borde); }
+.reparto b { color: var(--texto); font-weight: 600; }
 
 .categorias { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 6px; }
 .categorias li { display: grid; grid-template-columns: 110px 1fr auto; align-items: center; gap: 10px; font-size: 0.9rem; }

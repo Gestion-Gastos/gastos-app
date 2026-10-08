@@ -15,9 +15,12 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
     item_id: inicial?.item_id ?? '',
     descripcion: inicial?.descripcion ?? '',
     medio_pago: inicial?.medio_pago ?? 'Efectivo',
+    fijo: inicial?.fijo ?? false,
+    individual: inicial?.individual ?? false,
   })
 
   const cambiar = (campo) => (e) => setForm({ ...form, [campo]: e.target.value })
+  const cambiarSiNo = (campo) => (e) => setForm({ ...form, [campo]: e.target.value === 'true' })
 
   // Con una categoría elegida, Item muestra solo los suyos; sin categoría, todos
   const itemsVisibles = form.categoria_id
@@ -31,11 +34,17 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
     setForm({ ...form, categoria_id, item_id: itemSigue ? form.item_id : '' })
   }
 
-  // Elegir un item completa su categoría
+  // Elegir un item completa su categoría, y si es fijo y/o individual (se puede cambiar a mano)
   function cambiarItem(e) {
     const item_id = e.target.value
     const item = items.find((i) => String(i.id) === item_id)
-    setForm({ ...form, item_id, categoria_id: item?.categoria_id ?? form.categoria_id })
+    setForm({
+      ...form,
+      item_id,
+      categoria_id: item?.categoria_id ?? form.categoria_id,
+      fijo: item?.fijo ?? form.fijo,
+      individual: item?.individual ?? form.individual,
+    })
   }
 
   function enviar(e) {
@@ -48,6 +57,8 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
       item_id: form.item_id ? Number(form.item_id) : null,
       descripcion: form.descripcion.trim() || null,
       medio_pago: form.medio_pago,
+      fijo: form.fijo,
+      individual: form.individual,
     })
     if (!inicial) setForm({ ...form, monto: '', descripcion: '' })
   }
@@ -88,6 +99,20 @@ export default function FormGasto({ categorias, items, inicial, onGuardar, onCan
             {itemsVisibles.map((i) => (
               <option key={i.id} value={i.id}>{i.nombre}</option>
             ))}
+          </select>
+        </label>
+        <label>
+          Tipo
+          <select value={String(form.fijo)} onChange={cambiarSiNo('fijo')}>
+            <option value="false">Variable</option>
+            <option value="true">Fijo</option>
+          </select>
+        </label>
+        <label>
+          Gasto
+          <select value={String(form.individual)} onChange={cambiarSiNo('individual')}>
+            <option value="false">Familiar</option>
+            <option value="true">Individual</option>
           </select>
         </label>
         <label>

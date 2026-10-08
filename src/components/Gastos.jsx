@@ -20,6 +20,8 @@ export default function Gastos() {
   const [gastos, setGastos] = useState([])
   const [categorias, setCategorias] = useState([])
   const [items, setItems] = useState([])
+  const [filtroTipo, setFiltroTipo] = useState('')
+  const [filtroGasto, setFiltroGasto] = useState('')
   const [editando, setEditando] = useState(null)
   const [error, setError] = useState(null)
 
@@ -30,7 +32,7 @@ export default function Gastos() {
   }
 
   async function cargarItems() {
-    const { data, error } = await supabase.from('items').select('id, nombre, categoria_id').order('nombre')
+    const { data, error } = await supabase.from('items').select('id, nombre, categoria_id, fijo, individual').order('nombre')
     if (error) return setError(error.message)
     setItems(data)
   }
@@ -39,7 +41,7 @@ export default function Gastos() {
     const { desde, hasta } = rangoDelMes(mes)
     const { data, error } = await supabase
       .from('gastos')
-      .select('id, fecha, monto, descripcion, medio_pago, categoria_id, categorias(nombre), item_id, items(nombre)')
+      .select('id, fecha, monto, descripcion, medio_pago, categoria_id, categorias(nombre), item_id, items(nombre), fijo, individual')
       .gte('fecha', desde)
       .lte('fecha', hasta)
       .order('fecha', { ascending: false })
@@ -75,16 +77,29 @@ export default function Gastos() {
     cargarGastos()
   }
 
-  const total = useMemo(() => gastos.reduce((s, g) => s + Number(g.monto), 0), [gastos])
+  const filtrados = useMemo(
+    () =>
+      gastos.filter(
+        (g) =>
+          (!filtroTipo || g.fijo === (filtroTipo === 'fijo')) &&
+          (!filtroGasto || g.individual === (filtroGasto === 'individual'))
+      ),
+    [gastos, filtroTipo, filtroGasto]
+  )
+
+  const suma = (lista) => lista.reduce((s, g) => s + Number(g.monto), 0)
+  const total = useMemo(() => suma(filtrados), [filtrados])
+  const fijo = useMemo(() => suma(filtrados.filter((g) => g.fijo)), [filtrados])
+  const individual = useMemo(() => suma(filtrados.filter((g) => g.individual)), [filtrados])
 
   const porCategoria = useMemo(() => {
     const acc = {}
-    for (const g of gastos) {
+    for (const g of filtrados) {
       const nombre = g.categorias?.nombre ?? 'Sin categoría'
       acc[nombre] = (acc[nombre] ?? 0) + Number(g.monto)
     }
     return Object.entries(acc).sort((a, b) => b[1] - a[1])
-  }, [gastos])
+  }, [filtrados])
 
   return (
     <>
@@ -102,13 +117,29 @@ export default function Gastos() {
       <section className="tarjeta">
         <div className="fila-titulo">
           <h2>Historial</h2>
-          <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
+          <div className="filtros">
+            <select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
+              <option value="">Fijos y variables</option>
+              <option value="fijo">Solo fijos</option>
+              <option value="variable">Solo variables</option>
+            </select>
+            <select value={filtroGasto} onChange={(e) => setFiltroGasto(e.target.value)}>
+              <option value="">Familiares e individuales</option>
+              <option value="familiar">Solo familiares</option>
+              <option value="individual">Solo individuales</option>
+            </select>
+            <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
+          </div>
         </div>
 
         <div className="resumen">
           <div className="total">
             <span>Total del mes</span>
             <strong>{pesos.format(total)}</strong>
+          </div>
+          <div className="reparto">
+            <span>Fijo <b>{pesos.format(fijo)}</b> · Variable <b>{pesos.format(total - fijo)}</b></span>
+            <span>Familiar <b>{pesos.format(total - individual)}</b> · Individual <b>{pesos.format(individual)}</b></span>
           </div>
           {porCategoria.length > 0 && (
             <ul className="categorias">
@@ -125,8 +156,10 @@ export default function Gastos() {
           )}
         </div>
 
-        {gastos.length === 0 ? (
-          <p className="vacio">No hay gastos cargados en este mes.</p>
+        {filtrados.length === 0 ? (
+          <p className="vacio">
+            {gastos.length === 0 ? 'No hay gastos cargados en este mes.' : 'Ningún gasto coincide con los filtros.'}
+          </p>
         ) : (
           <div className="tabla-scroll">
             <table>
@@ -135,6 +168,7 @@ export default function Gastos() {
                   <th>Fecha</th>
                   <th>Categoría</th>
                   <th>Item</th>
+                  <th>Tipo</th>
                   <th>Descripción</th>
                   <th>Medio</th>
                   <th className="num">Monto</th>
@@ -142,11 +176,12 @@ export default function Gastos() {
                 </tr>
               </thead>
               <tbody>
-                {gastos.map((g) => (
+                {filtrados.map((g) => (
                   <tr key={g.id}>
                     <td>{g.fecha.split('-').reverse().join('/')}</td>
                     <td>{g.categorias?.nombre ?? '—'}</td>
                     <td>{g.items?.nombre ?? '—'}</td>
+                    <td>{g.fijo ? 'Fijo' : 'Variable'} · {g.individual ? 'Individual' : 'Familiar'}</td>
                     <td>{g.descripcion}</td>
                     <td>{g.medio_pago}</td>
                     <td className="num">{pesos.format(g.monto)}</td>
