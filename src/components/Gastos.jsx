@@ -195,7 +195,7 @@ export default function Gastos({ duenio, yo }) {
                     <td>{g.descripcion}</td>
                     <td>{g.medio_pago}</td>
                     <td className="num">{pesos.format(g.monto)}</td>
-                    <td>{g.creado_por === yo ? 'Vos' : g.creado_por_email ?? '—'}</td>
+                    <td>{g.creado_por_email ?? '—'}</td>
                     {puedeEscribir && (
                       <td className="acciones">
                         <button className="secundario" onClick={() => setEditando(g)}>Editar</button>
