@@ -1,30 +1,25 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { MONEDAS, formatear } from '../moneda'
-import { ACEPTADOS, nombreComprobante } from '../comprobantes'
+import { ACEPTADOS } from '../comprobantes'
+import { hoy } from '../fechas'
 
-const MEDIOS = ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'Mercado Pago']
+export const MEDIOS = ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'Mercado Pago']
 
-function hoy() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-export default function FormGasto({ categorias, items, cotizacion, inicial, onGuardar, onCancelar }) {
+// Estado y reglas de un gasto en edición; lo usan la ventana de alta y la fila editable de la tabla.
+// base: el gasto que se edita, o valores iniciales para uno nuevo (ej. un fijo pendiente)
+export function useFormGasto(base, items) {
   const [form, setForm] = useState({
-    fecha: inicial?.fecha ?? hoy(),
-    monto: inicial?.monto ?? '',
-    moneda: inicial?.moneda ?? '$',
-    categoria_id: inicial?.categoria_id ?? '',
-    item_id: inicial?.item_id ?? '',
-    descripcion: inicial?.descripcion ?? '',
-    medio_pago: inicial?.medio_pago ?? 'Efectivo',
-    fijo: inicial?.fijo ?? false,
-    individual: inicial?.individual ?? false,
+    fecha: base?.fecha ?? hoy(),
+    monto: base?.monto ?? '',
+    moneda: base?.moneda ?? '$',
+    categoria_id: base?.categoria_id ?? '',
+    item_id: base?.item_id ?? '',
+    descripcion: base?.descripcion ?? '',
+    medio_pago: base?.medio_pago ?? 'Efectivo',
+    fijo: base?.fijo ?? false,
+    individual: base?.individual ?? false,
+    pagado_por: base?.pagado_por ?? '',
   })
-  // Comprobante: archivo nuevo elegido, o quitar el que ya tenía
-  const [archivo, setArchivo] = useState(null)
-  const [quitar, setQuitar] = useState(false)
-  const inputArchivo = useRef(null)
 
   const cambiar = (campo) => (e) => setForm({ ...form, [campo]: e.target.value })
   const tildar = (campo) => (e) => setForm({ ...form, [campo]: e.target.checked })
@@ -54,32 +49,41 @@ export default function FormGasto({ categorias, items, cotizacion, inicial, onGu
     })
   }
 
-  function enviar(e) {
+  const armar = () => ({
+    ...(base?.id ? { id: base.id } : {}),
+    fecha: form.fecha,
+    monto: Number(form.monto),
+    moneda: form.moneda,
+    // Si sigue en U$D conserva la cotización con la que se cargó
+    cotizacion: form.moneda === 'U$D' ? base?.cotizacion ?? null : null,
+    categoria_id: form.categoria_id ? Number(form.categoria_id) : null,
+    item_id: form.item_id ? Number(form.item_id) : null,
+    descripcion: form.descripcion.trim() || null,
+    medio_pago: form.medio_pago,
+    fijo: form.fijo,
+    individual: form.individual,
+    pagado_por: form.pagado_por ? Number(form.pagado_por) : null,
+  })
+
+  return { form, cambiar, tildar, cambiarCategoria, cambiarItem, itemsVisibles, armar }
+}
+
+// Alta de un gasto (va dentro de la ventana "Nuevo gasto")
+// personas: lista de "Quién pagó" (se arma con los nombres de los ingresos)
+export default function FormGasto({ categorias, items, personas, cotizacion, precarga, onGuardar, onCancelar }) {
+  const { form, cambiar, tildar, cambiarCategoria, cambiarItem, itemsVisibles, armar } = useFormGasto(precarga, items)
+  const [archivo, setArchivo] = useState(null)
+  const [enviando, setEnviando] = useState(false)
+
+  async function enviar(e) {
     e.preventDefault()
-    onGuardar({
-      ...(inicial?.id ? { id: inicial.id } : {}),
-      fecha: form.fecha,
-      monto: Number(form.monto),
-      moneda: form.moneda,
-      // Si sigue en U$D conserva la cotización con la que se cargó
-      cotizacion: form.moneda === 'U$D' ? inicial?.cotizacion ?? null : null,
-      categoria_id: form.categoria_id ? Number(form.categoria_id) : null,
-      item_id: form.item_id ? Number(form.item_id) : null,
-      descripcion: form.descripcion.trim() || null,
-      medio_pago: form.medio_pago,
-      fijo: form.fijo,
-      individual: form.individual,
-    }, { archivo, quitar })
-    if (!inicial) {
-      setForm({ ...form, monto: '', descripcion: '' })
-      setArchivo(null)
-      if (inputArchivo.current) inputArchivo.current.value = ''
-    }
+    setEnviando(true)
+    await onGuardar(armar(), { archivo })
+    setEnviando(false)
   }
 
   return (
-    <form className="tarjeta formulario" onSubmit={enviar}>
-      <h2>{inicial ? 'Editar gasto' : 'Nuevo gasto'}</h2>
+    <form className="formulario" onSubmit={enviar}>
       <p className="cotizacion">
         {cotizacion ? (
           <>
@@ -93,7 +97,7 @@ export default function FormGasto({ categorias, items, cotizacion, inicial, onGu
       <div className="grilla">
         <label>
           Fecha
-          <input type="date" required value={form.fecha} onChange={cambiar('fecha')} />
+          <input type="date" required max={hoy()} value={form.fecha} onChange={cambiar('fecha')} />
         </label>
         <label>
           Monto
@@ -105,6 +109,7 @@ export default function FormGasto({ categorias, items, cotizacion, inicial, onGu
             inputMode="decimal"
             value={form.monto}
             onChange={cambiar('monto')}
+            autoFocus
           />
         </label>
         <label>
@@ -148,34 +153,25 @@ export default function FormGasto({ categorias, items, cotizacion, inicial, onGu
             {MEDIOS.map((m) => <option key={m}>{m}</option>)}
           </select>
         </label>
+        <label>
+          Quién pagó
+          <select required value={form.pagado_por} onChange={cambiar('pagado_por')}>
+            <option value="">{personas.length ? '— Elegir —' : 'Cargá un ingreso con nombre'}</option>
+            {personas.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+          </select>
+        </label>
         <label className="ancho">
           Descripción
           <input value={form.descripcion} onChange={cambiar('descripcion')} placeholder="Opcional" />
         </label>
         <label className="ancho">
-          {inicial?.comprobante && !quitar ? 'Reemplazar comprobante/factura' : 'Comprobante/Factura'}
-          <input
-            type="file"
-            ref={inputArchivo}
-            accept={ACEPTADOS}
-            onChange={(e) => {
-              setArchivo(e.target.files[0] ?? null)
-              setQuitar(false)
-            }}
-          />
+          Comprobante/Factura
+          <input type="file" accept={ACEPTADOS} onChange={(e) => setArchivo(e.target.files[0] ?? null)} />
         </label>
-        {inicial?.comprobante && !archivo && (
-          <label className="casilla ancho">
-            <input type="checkbox" checked={quitar} onChange={(e) => setQuitar(e.target.checked)} />
-            Quitar el comprobante/factura actual ({nombreComprobante(inicial.comprobante)})
-          </label>
-        )}
       </div>
       <div className="botones">
-        <button>{inicial ? 'Guardar cambios' : 'Agregar'}</button>
-        {inicial && (
-          <button type="button" className="secundario" onClick={onCancelar}>Cancelar</button>
-        )}
+        <button type="button" className="secundario" onClick={onCancelar}>Cancelar</button>
+        <button disabled={enviando}>{enviando ? 'Guardando…' : 'Agregar'}</button>
       </div>
     </form>
   )

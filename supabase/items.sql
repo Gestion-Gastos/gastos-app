@@ -42,7 +42,7 @@ from (values
   ('Fútbol'), ('OSDE'), ('Pilates'), ('Osteópata'), ('Psicóloga'), ('Claro'),
   ('Supermercado'), ('Verdulería'), ('Carnicería'), ('Panadería'), ('Farmacia'),
   ('Regalos Jardín y Colegio'), ('Arreglos Casa'), ('Resto'), ('Tarjeta'), ('Nafta'),
-  ('Service Auto'), ('Otras Comidas Restaurant'), ('Ropa'), ('Útiles'), ('Regalos'),
+  ('Service Auto'), ('Almuerzo'), ('Cena'), ('Desayuno'), ('Merienda'), ('Ropa'), ('Útiles'), ('Regalos'),
   ('Depi + uñas'), ('Vacaciones'), ('Gastos de cumple')
 ) as v(nombre)
 where not exists (

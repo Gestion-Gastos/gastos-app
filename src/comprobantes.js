@@ -12,9 +12,10 @@ function sanear(nombre) {
     .replace(/[^A-Za-z0-9._-]+/g, '_')
 }
 
-// Ruta: {duenio}/{gasto}/{timestamp}-{nombre}
-export async function subirComprobante(duenioId, gastoId, archivo) {
-  const ruta = `${duenioId}/${gastoId}/${Date.now()}-${sanear(archivo.name)}`
+// Ruta: {duenio}/{id al azar}/{timestamp}-{nombre}. Se sube antes de guardar el gasto,
+// así el gasto se crea o modifica con la ruta en una sola operación.
+export async function subirComprobante(duenioId, archivo) {
+  const ruta = `${duenioId}/${crypto.randomUUID()}/${Date.now()}-${sanear(archivo.name)}`
   const { error } = await supabase.storage.from(BUCKET).upload(ruta, archivo, { contentType: archivo.type || undefined })
   if (error) throw error
   return ruta

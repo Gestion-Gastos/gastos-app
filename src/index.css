@@ -29,6 +29,7 @@
     --suave: #9aa1ad;
     --borde: #2c323d;
     --acento: #5b8def;
+    --ok: #3fb96a;
     --serie-1: #3987e5;
     --serie-2: #d95926;
     --serie-3: #199e70;
@@ -45,6 +46,7 @@
   --suave: #9aa1ad;
   --borde: #2c323d;
   --acento: #5b8def;
+  --ok: #3fb96a;
   --serie-1: #3987e5;
   --serie-2: #d95926;
   --serie-3: #199e70;
@@ -57,7 +59,8 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--fondo); }
 
-.contenedor { max-width: 1200px; margin: 0 auto; padding: 16px; }
+/* La página se ensancha lo que necesite la tabla de gastos (mínimo 1200px, máximo el ancho de la ventana) */
+.contenedor { width: max-content; min-width: min(1200px, 100%); max-width: 100%; margin: 0 auto; padding: 16px; }
 .centro { text-align: center; margin-top: 30vh; }
 
 .cabecera { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
@@ -116,6 +119,8 @@ label.casilla { flex-direction: row; align-items: center; gap: 6px; font-size: 0
 
 .fila-titulo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
 .filtros { display: flex; flex-wrap: wrap; gap: 8px; }
+.navegar-mes { display: flex; align-items: center; gap: 4px; }
+.navegar-mes button { padding: 6px 10px; line-height: 1; }
 .fila-titulo h2 { margin: 0; }
 
 .resumen { margin-bottom: 16px; }
@@ -125,15 +130,35 @@ label.casilla { flex-direction: row; align-items: center; gap: 6px; font-size: 0
 .cotizacion b { color: var(--texto); font-weight: 600; }
 .reparto { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 8px 0; color: var(--suave); font-size: 0.9rem; border-bottom: 1px solid var(--borde); }
 .reparto b { color: var(--texto); font-weight: 600; }
+.balance { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 8px 12px; margin-bottom: 8px; border-radius: 8px; background: var(--fondo); color: var(--suave); }
+.balance b { color: var(--texto); font-size: 1.05rem; }
+.resumen b.ok { color: var(--ok); }
+.resumen b.error { color: var(--peligro); }
+.subtitulo { margin: 16px 0 4px; font-size: 1rem; }
+.comparacion td.ok { color: var(--ok); }
+.comparacion td.error { color: var(--peligro); }
+
+.pendientes { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; }
+.pendientes li { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid var(--borde); }
+.pendientes li span:first-child { flex: 1; }
+.pendientes button { padding: 4px 12px; font-size: 0.85rem; }
+
+.fila-total td { font-weight: 600; border-bottom: none; }
+.ingreso-form { margin-top: 12px; }
 
 
-.tabla-scroll { overflow-x: auto; }
+.tabla-scroll { overflow-x: visible; }
+@media (max-width: 600px) { .tabla-scroll { overflow-x: auto; } }
 table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--borde); white-space: nowrap; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--borde); }
+td.largo { overflow-wrap: anywhere; min-width: 7rem; }
+/* Si no entra, parten línea los textos largos (mails, descripción); fecha, montos y botones no */
+td:first-child, .num, .acciones, button.comprobante { white-space: nowrap; }
 th { color: var(--suave); font-weight: 500; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .acciones { display: flex; gap: 6px; justify-content: flex-end; }
 .acciones button { padding: 4px 10px; font-size: 0.8rem; }
+button.exportar { white-space: nowrap; }
 
 .vacio { color: var(--suave); text-align: center; padding: 16px 0; }
 .error { color: var(--peligro); }
@@ -175,3 +200,34 @@ a.boton { display: inline-block; border-radius: 8px; padding: 8px 14px; backgrou
 .visor-texto { margin: 0; padding: 12px; white-space: pre-wrap; font-size: 0.9rem; }
 
 .torta-leyenda .pct { color: var(--suave); text-align: right; }
+
+/* Botón y ventana "Nuevo gasto" */
+button.nuevo-gasto { display: block; width: 100%; margin: 16px 0; padding: 12px; font-size: 1rem; font-weight: 600; }
+.modal-fondo { position: fixed; inset: 0; z-index: 10; background: rgb(0 0 0 / 0.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal { background: var(--tarjeta); color: var(--texto); border: 1px solid var(--borde); border-radius: 12px; width: min(640px, 100%); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+.modal-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--borde); }
+.modal-cabecera h2 { margin: 0; font-size: 1.1rem; }
+.modal-cabecera button.cerrar { padding: 4px 10px; }
+.modal-cuerpo { padding: 16px; overflow: auto; }
+.formulario .botones { justify-content: flex-end; }
+@media (max-width: 600px) {
+  .modal-fondo { padding: 8px; }
+  .modal { max-height: 96vh; }
+}
+
+/* Fila de la tabla en edición */
+.fila-edicion td { background: var(--fondo); vertical-align: top; }
+.fila-edicion input, .fila-edicion select { padding: 4px 6px; font-size: 0.85rem; background: var(--tarjeta); }
+.fila-edicion input[type="date"] { width: 9.5rem; }
+.fila-edicion input.monto { width: 7rem; text-align: right; }
+.fila-edicion label.casilla { font-size: 0.85rem; }
+.fila-edicion .casilla input { width: 16px; height: 16px; }
+.fila-edicion .error, .fila-edicion .nota { white-space: normal; font-size: 0.8rem; margin-top: 4px; }
+.comprobante-edicion { display: flex; align-items: center; gap: 4px; }
+button.clip { padding: 4px 8px; font-size: 0.85rem; line-height: 1.2; }
+button.clip.adjunto { background: var(--acento); color: white; border: 1px solid var(--acento); }
+.archivo-elegido { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; }
+.archivo-quitado { text-decoration: line-through; color: var(--suave); font-size: 0.85rem; }
+
+
+.aviso-ingresos { margin: -8px 0 16px; text-align: center; }

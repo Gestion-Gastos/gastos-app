@@ -7,7 +7,8 @@ update public.items i
 set categoria_id = c.id
 from (values
   ('Supermercado', 'Alimentos'), ('Verdulería', 'Alimentos'), ('Carnicería', 'Alimentos'),
-  ('Panadería', 'Alimentos'), ('Resto', 'Alimentos'), ('Otras Comidas Restaurant', 'Alimentos'),
+  ('Panadería', 'Alimentos'), ('Resto', 'Alimentos'), ('Almuerzo', 'Alimentos'), ('Cena', 'Alimentos'),
+  ('Desayuno', 'Alimentos'), ('Merienda', 'Alimentos'),
   ('ABL / ARBA', 'Vivienda'), ('Arreglos Casa', 'Vivienda'), ('Muchacha', 'Vivienda'),
   ('Aporte Muchacha', 'Vivienda'), ('Antigüedad', 'Vivienda'),
   ('Edenor', 'Servicios'), ('Aysa', 'Servicios'), ('Naturgy', 'Servicios'),
