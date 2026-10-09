@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { MONEDAS, formatear } from '../moneda'
+import { ACEPTADOS, nombreComprobante } from '../comprobantes'
 
 const MEDIOS = ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'Mercado Pago']
 
@@ -20,6 +21,10 @@ export default function FormGasto({ categorias, items, cotizacion, inicial, onGu
     fijo: inicial?.fijo ?? false,
     individual: inicial?.individual ?? false,
   })
+  // Comprobante: archivo nuevo elegido, o quitar el que ya tenía
+  const [archivo, setArchivo] = useState(null)
+  const [quitar, setQuitar] = useState(false)
+  const inputArchivo = useRef(null)
 
   const cambiar = (campo) => (e) => setForm({ ...form, [campo]: e.target.value })
   const tildar = (campo) => (e) => setForm({ ...form, [campo]: e.target.checked })
@@ -64,8 +69,12 @@ export default function FormGasto({ categorias, items, cotizacion, inicial, onGu
       medio_pago: form.medio_pago,
       fijo: form.fijo,
       individual: form.individual,
-    })
-    if (!inicial) setForm({ ...form, monto: '', descripcion: '' })
+    }, { archivo, quitar })
+    if (!inicial) {
+      setForm({ ...form, monto: '', descripcion: '' })
+      setArchivo(null)
+      if (inputArchivo.current) inputArchivo.current.value = ''
+    }
   }
 
   return (
@@ -143,6 +152,24 @@ export default function FormGasto({ categorias, items, cotizacion, inicial, onGu
           Descripción
           <input value={form.descripcion} onChange={cambiar('descripcion')} placeholder="Opcional" />
         </label>
+        <label className="ancho">
+          {inicial?.comprobante && !quitar ? 'Reemplazar comprobante/factura' : 'Comprobante/Factura'}
+          <input
+            type="file"
+            ref={inputArchivo}
+            accept={ACEPTADOS}
+            onChange={(e) => {
+              setArchivo(e.target.files[0] ?? null)
+              setQuitar(false)
+            }}
+          />
+        </label>
+        {inicial?.comprobante && !archivo && (
+          <label className="casilla ancho">
+            <input type="checkbox" checked={quitar} onChange={(e) => setQuitar(e.target.checked)} />
+            Quitar el comprobante/factura actual ({nombreComprobante(inicial.comprobante)})
+          </label>
+        )}
       </div>
       <div className="botones">
         <button>{inicial ? 'Guardar cambios' : 'Agregar'}</button>

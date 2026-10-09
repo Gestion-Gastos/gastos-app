@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
+import IconoGoogle from './IconoGoogle'
 
 export default function Login() {
   const [modo, setModo] = useState('entrar') // 'entrar' | 'registro'
@@ -32,9 +33,24 @@ export default function Login() {
     }
   }
 
+  async function conGoogle() {
+    setMensaje(null)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      // vuelve a donde estabas (local o GitHub Pages)
+      options: { redirectTo: window.location.origin + window.location.pathname },
+    })
+    if (error) setMensaje({ tipo: 'error', texto: error.message })
+  }
+
   return (
     <form className="tarjeta login" onSubmit={enviar}>
       <h2>{modo === 'entrar' ? 'Ingresar' : 'Crear cuenta'}</h2>
+      <button type="button" className="secundario google" onClick={conGoogle}>
+        <IconoGoogle />
+        Continuar con Google
+      </button>
+      <p className="separador">o con tu mail</p>
       <label>
         Email
         <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />

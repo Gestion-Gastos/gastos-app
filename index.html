@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="./icono.svg" />
     <title>Gestión de Gastos</title>
+    <script>
+      // Aplica el tema elegido antes de pintar, para que no parpadee al recargar
+      try {
+        const tema = localStorage.getItem('tema')
+        if (tema) document.documentElement.dataset.theme = tema
+      } catch {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

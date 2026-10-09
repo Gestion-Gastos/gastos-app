@@ -3,8 +3,18 @@ import { supabase } from './supabaseClient'
 import Login from './components/Login'
 import Gastos from './components/Gastos'
 import ElegirPassword from './components/ElegirPassword'
+import IconoGoogle from './components/IconoGoogle'
 
 const PERMISOS = { lectura: 'solo lectura', escritura: 'lectura y escritura' }
+
+// Tema elegido con el botón; si nunca se eligió, el del sistema
+function temaInicial() {
+  try {
+    const guardado = localStorage.getItem('tema')
+    if (guardado) return guardado
+  } catch {}
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -12,6 +22,16 @@ export default function App() {
   // Invitaciones que me hicieron otros usuarios, y de quién son los gastos que estoy viendo
   const [recibidos, setRecibidos] = useState([])
   const [viendo, setViendo] = useState('')
+  const [tema, setTema] = useState(temaInicial)
+
+  function cambiarTema() {
+    const nuevo = tema === 'dark' ? 'light' : 'dark'
+    setTema(nuevo)
+    document.documentElement.dataset.theme = nuevo
+    try {
+      localStorage.setItem('tema', nuevo)
+    } catch {}
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -37,6 +57,19 @@ export default function App() {
       .then(({ data }) => setRecibidos(data ?? []))
   }, [userId, email])
 
+  // Cuentas Gmail que entraron con contraseña pueden vincular Google para entrar con "Continuar con Google"
+  const puedeVincularGoogle =
+    /@(gmail|googlemail)\.com$/.test(email ?? '') &&
+    !session?.user.identities?.some((i) => i.provider === 'google')
+
+  async function vincularGoogle() {
+    const { error } = await supabase.auth.linkIdentity({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + window.location.pathname },
+    })
+    if (error) alert(error.message)
+  }
+
   if (cargando) return <p className="centro">Cargando…</p>
 
   const compartido = recibidos.find((r) => r.duenio_id === viendo)
@@ -57,7 +90,21 @@ export default function App() {
         </h1>
         {session && (
           <div className="usuario">
+            {puedeVincularGoogle && (
+              <button className="secundario google" onClick={vincularGoogle}>
+                <IconoGoogle />
+                Vincular con Google
+              </button>
+            )}
             <span>{session.user.email}</span>
+            <button
+              className="secundario tema"
+              onClick={cambiarTema}
+              title={tema === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+              aria-label={tema === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+            >
+              {tema === 'dark' ? '☀️' : '🌙'}
+            </button>
             <button className="secundario" onClick={() => supabase.auth.signOut()}>
               Salir
             </button>

@@ -3,7 +3,11 @@ import { supabase } from '../supabaseClient'
 import FormGasto from './FormGasto'
 import Compartir from './Compartir'
 import GraficoTorta from './GraficoTorta'
+import VisorComprobante from './VisorComprobante'
 import { formatear, obtenerCotizacion, enPesos } from '../moneda'
+import { subirComprobante, borrarComprobante } from '../comprobantes'
+
+const MAX_COMPROBANTE = 10 * 1024 * 1024
 
 function mesActual() {
   const d = new Date()
@@ -28,6 +32,7 @@ export default function Gastos({ duenio, yo }) {
   const [filtroGasto, setFiltroGasto] = useState('')
   const [cotizacion, setCotizacion] = useState(null)
   const [editando, setEditando] = useState(null)
+  const [viendoComprobante, setViendoComprobante] = useState(null)
   const [error, setError] = useState(null)
 
   async function cargarCategorias() {
@@ -46,7 +51,7 @@ export default function Gastos({ duenio, yo }) {
     const { desde, hasta } = rangoDelMes(mes)
     const { data, error } = await supabase
       .from('gastos')
-      .select('id, fecha, monto, moneda, cotizacion, descripcion, medio_pago, categoria_id, categorias(nombre), item_id, items(nombre), fijo, individual, creado_por, creado_por_email')
+      .select('id, fecha, monto, moneda, cotizacion, descripcion, medio_pago, categoria_id, categorias(nombre), item_id, items(nombre), fijo, individual, creado_por, creado_por_email, comprobante')
       .eq('user_id', duenio.id)
       .gte('fecha', desde)
       .lte('fecha', hasta)
@@ -74,25 +79,45 @@ export default function Gastos({ duenio, yo }) {
     cargarGastos()
   }, [mes])
 
-  async function guardar(gasto) {
+  async function guardar(gasto, { archivo, quitar }) {
     const { id, ...campos } = gasto
     // Un gasto en U$D nuevo (o que pasó de $ a U$D) guarda la cotización de hoy
     if (campos.moneda === 'U$D' && campos.cotizacion == null) {
       if (!cotizacion) return setError('No hay cotización del dólar disponible; no se puede guardar un gasto en U$D.')
       campos.cotizacion = cotizacion.venta
     }
-    const { error } = id
-      ? await supabase.from('gastos').update(campos).eq('id', id)
-      : await supabase.from('gastos').insert({ ...campos, user_id: duenio.id })
+    if (archivo && archivo.size > MAX_COMPROBANTE) return setError('El comprobante/factura no puede pesar más de 10 MB.')
+    const { data, error } = id
+      ? await supabase.from('gastos').update(campos).eq('id', id).select('id').single()
+      : await supabase.from('gastos').insert({ ...campos, user_id: duenio.id }).select('id').single()
     if (error) return setError(error.message)
+    setError(null)
+
+    // Comprobante: se sube después de guardar el gasto (la ruta lleva su id); si falla, el gasto queda guardado
+    const anterior = id ? gastos.find((g) => g.id === id)?.comprobante : null
+    try {
+      if (archivo) {
+        const ruta = await subirComprobante(duenio.id, data.id, archivo)
+        const { error } = await supabase.from('gastos').update({ comprobante: ruta }).eq('id', data.id)
+        if (error) throw error
+        await borrarComprobante(anterior)
+      } else if (quitar && anterior) {
+        const { error } = await supabase.from('gastos').update({ comprobante: null }).eq('id', data.id)
+        if (error) throw error
+        await borrarComprobante(anterior)
+      }
+    } catch (e) {
+      setError(`El gasto se guardó, pero hubo un problema con el comprobante/factura: ${e.message}`)
+    }
     setEditando(null)
     cargarGastos()
   }
 
-  async function borrar(id) {
+  async function borrar(g) {
     if (!confirm('¿Borrar este gasto?')) return
-    const { error } = await supabase.from('gastos').delete().eq('id', id)
+    const { error } = await supabase.from('gastos').delete().eq('id', g.id)
     if (error) return setError(error.message)
+    borrarComprobante(g.comprobante).catch(() => {})
     cargarGastos()
   }
 
@@ -186,6 +211,7 @@ export default function Gastos({ duenio, yo }) {
                   <th>Moneda</th>
                   <th className="num">Monto</th>
                   <th>Cargado por</th>
+                  <th>Comprobante/Factura</th>
                   {puedeEscribir && <th></th>}
                 </tr>
               </thead>
@@ -201,11 +227,20 @@ export default function Gastos({ duenio, yo }) {
                     <td>{g.moneda}</td>
                     <td className="num">{formatear(g.monto, g.moneda)}</td>
                     <td>{g.creado_por_email ?? '—'}</td>
+                    <td>
+                      {g.comprobante ? (
+                        <button className="secundario comprobante" onClick={() => setViendoComprobante(g.comprobante)}>
+                          📎 Ver
+                        </button>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
                     {puedeEscribir && (
                       <td className="acciones">
                         <button className="secundario" onClick={() => setEditando(g)}>Editar</button>
                         {g.creado_por === yo && (
-                          <button className="peligro" onClick={() => borrar(g.id)}>Borrar</button>
+                          <button className="peligro" onClick={() => borrar(g)}>Borrar</button>
                         )}
                       </td>
                     )}
@@ -216,6 +251,10 @@ export default function Gastos({ duenio, yo }) {
           </div>
         )}
       </section>
+
+      {viendoComprobante && (
+        <VisorComprobante ruta={viendoComprobante} onCerrar={() => setViendoComprobante(null)} />
+      )}
 
       {duenio.propio && <Compartir />}
     </>
